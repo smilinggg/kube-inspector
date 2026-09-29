@@ -1,0 +1,8 @@
+/kube-inspector
+/kube-inspector.exe
+/bin/
+/coverage.out
+/pods-local.json
+/report.json
+/kubeconfig*
+/notes/private/

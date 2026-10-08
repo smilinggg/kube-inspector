@@ -18,7 +18,7 @@ type Finding struct {
 
 // CheckPods 执行三个基础检查。restartThreshold 必须大于 0。
 // 返回空切片而不是 nil，保证 JSON 输出为 []。
-func CheckPods(pods []model.Pod, restartThreshold int) []Finding {
+func CheckPods(pods []model.Pod, options model.Options) []Finding {
 	findings := make([]Finding, 0)
 	for _, pod := range pods {
 		// 这些规则检查活动 Pod。已完成、已失败、正在删除的 Pod
@@ -52,10 +52,10 @@ func CheckPods(pods []model.Pod, restartThreshold int) []Finding {
 						findings = append(findings, newFinding(pod, "CONTAINER_TERMINATED", "ERROR", container.Name, fmt.Sprintf("exitCode=%d,reason=%s", terminated.ExitCode, terminated.Reason)))
 					}
 				}
-				if int(container.RestartCount) >= restartThreshold {
+				if int(container.RestartCount) >= *options.RestartThreshold {
 					findings = append(findings, newFinding(pod, "CONTAINER_RESTARTS", "WARN",
 						container.Name, fmt.Sprintf("reported restartCount=%d, threshold=%d (not a recent rate)",
-							container.RestartCount, restartThreshold)))
+							container.RestartCount, *options.RestartThreshold)))
 				}
 			}
 		}

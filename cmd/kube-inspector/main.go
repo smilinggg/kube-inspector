@@ -19,10 +19,11 @@ func main() {
 
 // 退出码：0=扫描完成且本版规则无发现；2=扫描完成且有发现；1=执行失败。
 func run(args []string, stdout, stderr io.Writer) int {
+	var options model.Options
 	flags := flag.NewFlagSet("kube-inspector", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	file := flags.String("file", "testdata/pods.json", "path to a Kubernetes PodList JSON file")
-	threshold := flags.Int("restart-threshold", 5, "reported restartCount threshold, inclusive")
+	options.RestartThreshold = flags.Int("restart-threshold", 5, "reported restartCount threshold, inclusive")
 	namespace := flags.String("namespace", "", "only inspect this namespace; empty means all in input")
 	format := flags.String("output", "table", "table or json")
 	if err := flags.Parse(args); err != nil {
@@ -31,7 +32,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 		return 1
 	}
-	if flags.NArg() != 0 || *threshold <= 0 || (*format != "table" && *format != "json") {
+	if flags.NArg() != 0 || *options.RestartThreshold <= 0 || (*format != "table" && *format != "json") {
 		fmt.Fprintln(stderr, "invalid arguments: threshold must be positive; output must be table or json; positional arguments are not supported")
 		return 1
 	}
@@ -47,7 +48,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 			selected = append(selected, pod)
 		}
 	}
-	findings := check.CheckPods(selected, *threshold)
+	findings := check.CheckPods(selected, options)
 	if err := writeFindings(stdout, *format, findings); err != nil {
 		fmt.Fprintln(stderr, "write report:", err)
 		return 1

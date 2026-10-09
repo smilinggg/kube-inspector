@@ -52,10 +52,10 @@ func CheckPods(pods []model.Pod, options model.Options) []Finding {
 						findings = append(findings, newFinding(pod, "CONTAINER_TERMINATED", "ERROR", container.Name, fmt.Sprintf("exitCode=%d,reason=%s", terminated.ExitCode, terminated.Reason)))
 					}
 				}
-				if int(container.RestartCount) >= *options.RestartThreshold {
+				if int(container.RestartCount) >= options.RestartThreshold {
 					findings = append(findings, newFinding(pod, "CONTAINER_RESTARTS", "WARN",
 						container.Name, fmt.Sprintf("reported restartCount=%d, threshold=%d (not a recent rate)",
-							container.RestartCount, *options.RestartThreshold)))
+							container.RestartCount, options.RestartThreshold)))
 				}
 			}
 		}

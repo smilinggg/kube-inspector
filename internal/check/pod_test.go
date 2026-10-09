@@ -38,6 +38,7 @@ func TestCheckPods(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			options := model.Options{RestartThreshold: 5, PendingThreshold: 0}
 			pod := model.Pod{Metadata: model.Metadata{Name: "demo", Namespace: "lab"}}
 			pod.Status.Phase = test.phase
 			if test.ready != "" {
@@ -56,7 +57,7 @@ func TestCheckPods(t *testing.T) {
 				stamp := "2026-09-23T00:00:00Z"
 				pod.Metadata.DeletionTimestamp = &stamp
 			}
-			findings := CheckPods([]model.Pod{pod}, 5)
+			findings := CheckPods([]model.Pod{pod}, options)
 			var rules []string
 			for _, finding := range findings {
 				rules = append(rules, finding.Rule)
@@ -72,7 +73,7 @@ func TestCheckPods(t *testing.T) {
 }
 
 func TestEmptyInputReturnsEmptySlice(t *testing.T) {
-	if got := CheckPods(nil, 5); got == nil || len(got) != 0 {
+	if got := CheckPods(nil, model.Options{RestartThreshold: 5, PendingThreshold: 0}); got == nil || len(got) != 0 {
 		t.Fatalf("expected a non-nil empty slice, got %#v", got)
 	}
 }

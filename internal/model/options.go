@@ -3,6 +3,6 @@ package model
 import "time"
 
 type Options struct {
-	RestartThreshold *int
+	RestartThreshold int
 	PendingThreshold time.Duration
 }

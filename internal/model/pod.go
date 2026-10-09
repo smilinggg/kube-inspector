@@ -16,6 +16,7 @@ type Metadata struct {
 	Name              string  `json:"name"`
 	Namespace         string  `json:"namespace"`
 	DeletionTimestamp *string `json:"deletionTimestamp,omitempty"`
+	CreationTimestamp *string `json:"creationTimestamp,omitempty"`
 }
 
 type PodStatus struct {

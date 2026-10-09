@@ -3,21 +3,24 @@ package check
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"example.com/kube-inspector/internal/model"
 )
 
 // 每一行测试都来自一个真实判断边界，后续规则也按此方式补案例。
 func TestCheckPods(t *testing.T) {
+	recentCreation := "2026-09-29T01:00:00Z"
 	tests := []struct {
-		name     string
-		phase    string
-		ready    string
-		reason   string
-		restarts int32
-		init     bool
-		deleting bool
-		want     []string
+		name              string
+		phase             string
+		ready             string
+		reason            string
+		restarts          int32
+		init              bool
+		deleting          bool
+		want              []string
+		creationTimestamp *string
 	}{
 		{name: "healthy", phase: "Running", ready: "True"},
 		{name: "running but not ready", phase: "Running", ready: "False", want: []string{"POD_NOT_READY"}},
@@ -25,21 +28,23 @@ func TestCheckPods(t *testing.T) {
 		{name: "unknown ready condition", phase: "Running", ready: "Unknown", want: []string{"POD_NOT_READY"}},
 		{name: "completed job is excluded", phase: "Succeeded", ready: "False", restarts: 9},
 		{name: "failed pod is outside v0 scope", phase: "Failed", restarts: 9},
-		{name: "ordinary pending is not an image error", phase: "Pending", reason: "ContainerCreating"},
+		{name: "ordinary pending is not an image error", phase: "Pending", reason: "ContainerCreating", creationTimestamp: &recentCreation},
+		{name: "pending without timestamp still checks containers", phase: "Pending", reason: "ImagePullBackOff", want: []string{"CONTAINER_WAITING"}},
 		{name: "image backoff", phase: "Pending", reason: "ImagePullBackOff", want: []string{"CONTAINER_WAITING"}},
 		{name: "image pull error", phase: "Pending", reason: "ErrImagePull", want: []string{"CONTAINER_WAITING"}},
 		{name: "crash loop has three findings", phase: "Running", ready: "False", reason: "CrashLoopBackOff", restarts: 7,
 			want: []string{"POD_NOT_READY", "CONTAINER_WAITING", "CONTAINER_RESTARTS"}},
 		{name: "threshold minus one", phase: "Running", ready: "True", restarts: 4},
 		{name: "exact threshold", phase: "Running", ready: "True", restarts: 5, want: []string{"CONTAINER_RESTARTS"}},
-		{name: "init container image backoff", phase: "Pending", init: true, reason: "ImagePullBackOff", want: []string{"CONTAINER_WAITING"}},
+		{name: "init container image backoff", phase: "Pending", init: true, reason: "ImagePullBackOff", want: []string{"CONTAINER_WAITING"}, creationTimestamp: &recentCreation},
 		{name: "init container restart threshold", phase: "Pending", init: true, restarts: 5, want: []string{"CONTAINER_RESTARTS"}},
 		{name: "terminating pod has separate semantics", phase: "Running", deleting: true, ready: "False", restarts: 9},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			options := model.Options{RestartThreshold: 5, PendingThreshold: 0}
+			options := model.Options{RestartThreshold: 5, PendingThreshold: 5 * time.Minute}
 			pod := model.Pod{Metadata: model.Metadata{Name: "demo", Namespace: "lab"}}
+			pod.Metadata.CreationTimestamp = test.creationTimestamp
 			pod.Status.Phase = test.phase
 			if test.ready != "" {
 				pod.Status.Conditions = []model.Condition{{Type: "Ready", Status: test.ready}}
@@ -73,7 +78,7 @@ func TestCheckPods(t *testing.T) {
 }
 
 func TestEmptyInputReturnsEmptySlice(t *testing.T) {
-	if got := CheckPods(nil, model.Options{RestartThreshold: 5, PendingThreshold: 0}); got == nil || len(got) != 0 {
+	if got := CheckPods(nil, model.Options{RestartThreshold: 5, PendingThreshold: 5 * time.Minute}); got == nil || len(got) != 0 {
 		t.Fatalf("expected a non-nil empty slice, got %#v", got)
 	}
 }

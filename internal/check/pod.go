@@ -3,6 +3,7 @@ package check
 
 import (
 	"fmt"
+	"time"
 
 	"example.com/kube-inspector/internal/model"
 )
@@ -33,6 +34,16 @@ func CheckPods(pods []model.Pod, options model.Options) []Finding {
 			findings = append(findings, newFinding(pod, "POD_NOT_READY", "WARN", "",
 				"phase is Running but Ready condition is not True"))
 		}
+		//检查pending状态的容器
+		if pod.Status.Phase == "Pending" && pod.Metadata.CreationTimestamp != nil {
+			// 解析时间戳字符串，忽略解析错误。
+			if creationTime, err := parseTime(*pod.Metadata.CreationTimestamp); err == nil {
+				if age := time.Since(creationTime); age >= options.PendingThreshold {
+					findings = append(findings, newFinding(pod, "POD_PENDING_TOO_LONG", "WARN", "",
+						fmt.Sprintf("phase is Pending for %s, threshold=%s", age.Round(time.Second), options.PendingThreshold)))
+				}
+			}
+		}
 
 		// 分别检查普通容器和 init 容器；仅读取，不修改输入对象。
 		for _, statuses := range [][]model.ContainerStatus{
@@ -47,6 +58,7 @@ func CheckPods(pods []model.Pod, options model.Options) []Finding {
 							container.Name, "waiting reason: "+waiting.Reason))
 					}
 				}
+				//检查terminated状态的容器
 				if terminated := container.State.Terminated; terminated != nil {
 					if terminated.ExitCode != 0 {
 						findings = append(findings, newFinding(pod, "CONTAINER_TERMINATED", "ERROR", container.Name, fmt.Sprintf("exitCode=%d,reason=%s", terminated.ExitCode, terminated.Reason)))
@@ -78,4 +90,9 @@ func newFinding(pod model.Pod, rule, severity, container, message string) Findin
 		Namespace: pod.Metadata.Namespace, Pod: pod.Metadata.Name,
 		Container: container, Message: message,
 	}
+}
+
+func parseTime(timestamp string) (time.Time, error) {
+	// Kubernetes 时间戳是 RFC3339 格式，可能包含纳秒。
+	return time.Parse(time.RFC3339, timestamp)
 }

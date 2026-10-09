@@ -18,7 +18,7 @@ func TestSampleReportAndNamespace(t *testing.T) {
 		count     int
 		code      int
 	}{
-		{name: "all", count: 5, code: 2},
+		{name: "all", count: 7, code: 2},
 		{name: "completed job only", namespace: "batch", count: 0, code: 0},
 	} {
 		t.Run(test.name, func(t *testing.T) {

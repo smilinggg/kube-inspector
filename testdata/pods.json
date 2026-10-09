@@ -3,7 +3,7 @@
   "kind": "PodList",
   "items": [
     {
-      "metadata": {"namespace": "default", "name": "web-ready"},
+      "metadata": {"namespace": "default", "name": "web-ready","creationTimestamp": "2026-09-29T00:54:00Z"},
       "status": {
         "phase": "Running",
         "conditions": [{"type": "Ready", "status": "True"}],
@@ -11,7 +11,7 @@
       }
     },
     {
-      "metadata": {"namespace": "default", "name": "api-crash"},
+      "metadata": {"namespace": "default", "name": "api-crash","creationTimestamp": "2026-09-30T01:54:00Z"},
       "status": {
         "phase": "Running",
         "conditions": [{"type": "Ready", "status": "False"}],
@@ -19,7 +19,7 @@
       }
     },
     {
-      "metadata": {"namespace": "batch", "name": "demo-job"},
+      "metadata": {"namespace": "batch", "name": "demo-job","creationTimestamp": "2026-09-29T00:54:00Z"},
       "status": {
         "phase": "Succeeded",
         "conditions": [{"type": "Ready", "status": "False"}],
@@ -27,7 +27,7 @@
       }
     },
     {
-      "metadata": {"namespace": "batch", "name": "demo-job-failed"},
+      "metadata": {"namespace": "batch", "name": "demo-job-failed","creationTimestamp": "2026-09-29T00:54:00Z"},
       "status": {
         "phase": "Failed",
         "conditions": [{"type": "Ready", "status": "False"}],
@@ -35,7 +35,7 @@
       }
     },
     {
-      "metadata": {"namespace": "default", "name": "image-pull"},
+      "metadata": {"namespace": "default", "name": "image-pull","creationTimestamp": "2026-09-29T00:54:00Z"},
       "status": {
         "phase": "Pending",
         "conditions": [{"type": "Ready", "status": "False"}],
@@ -43,11 +43,17 @@
       }
     },
     {
-      "metadata": {"namespace": "default", "name": "worker-restarted"},
+      "metadata": {"namespace": "default", "name": "worker-restarted","creationTimestamp": "2026-09-29T00:54:00Z"},
       "status": {
         "phase": "Running",
         "conditions": [{"type": "Ready", "status": "True"}],
         "containerStatuses": [{"name": "worker", "restartCount": 8, "state": {"running": {}}}]
+      }
+    },
+    {
+      "metadata": {"namespace": "default","name": "pending-demo","creationTimestamp": "2026-09-29T00:54:00Z"},
+      "status": {
+        "phase": "Pending"
       }
     }
   ]

@@ -24,8 +24,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("kube-inspector", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	file := flags.String("file", "testdata/pods.json", "path to a Kubernetes PodList JSON file")
-	options.RestartThreshold = *flags.Int("restart-threshold", 5, "reported restartCount threshold, inclusive")
-	options.PendingThreshold = *flags.Duration("pending-threshold", 5*time.Minute, "reported pending duration threshold, inclusive")
+	restartThreshold := flags.Int("restart-threshold", 5, "reported restartCount threshold, inclusive")
+	pendingThreshold := flags.Duration("pending-threshold", 5*time.Minute, "reported pending duration threshold, inclusive")
 	namespace := flags.String("namespace", "", "only inspect this namespace; empty means all in input")
 	format := flags.String("output", "table", "table or json")
 	if err := flags.Parse(args); err != nil {
@@ -34,6 +34,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 		return 1
 	}
+	options.RestartThreshold = *restartThreshold
+	options.PendingThreshold = *pendingThreshold
 	if flags.NArg() != 0 || options.RestartThreshold <= 0 || options.PendingThreshold <= 0 || (*format != "table" && *format != "json") {
 		fmt.Fprintln(stderr, "invalid arguments: threshold must be positive; output must be table or json; positional arguments are not supported")
 		return 1
